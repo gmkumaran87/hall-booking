@@ -7,5 +7,6 @@ console.log("Inside Rooms Router");
 
 router.route("/").get(getAllRooms);
 router.route("/create-room").post(createRoom);
+router.route("/book-room").post(bookRoom);
 
 module.exports = router;

@@ -1,5 +1,3 @@
-// const dbClient = require("../index");
-
 const connectDB = require("../db/connect");
 
 const dbConnection = async() => {
@@ -8,6 +6,17 @@ const dbConnection = async() => {
     return db;
 };
 
+// Getting the available rooms
+const availableRoom = async(db) => {
+    const roomAvailable = await db
+        .collection("rooms")
+        .find({ bookedStatus: false })
+        .project({ roomId: 1 })
+        .toArray();
+
+    return roomAvailable.map((el) => el.roomId)[0];
+    // console.log("Available rooms", roomAvailable);
+};
 const getAllRooms = (req, res) => {
     console.log("Inside Rooms controller");
     console.log(req.url);
@@ -31,8 +40,27 @@ const createRoom = async(req, res) => {
     }
 };
 
-const bookRoom = (req, res) => {
-    res.send("Room booking page..");
+const bookRoom = async(req, res) => {
+    // Getting the DB Connection
+    const db = await dbConnection();
+    let data = [];
+
+    const roomAvailable = await availableRoom(db);
+
+    console.log(roomAvailable);
+    req.body.roomId = roomAvailable;
+    console.log(req.body);
+
+    const result = await db
+        .collection("rooms")
+        .updateOne({ roomId: roomAvailable }, { $set: { bookedStatus: true } });
+
+    if (result.acknowledged) {
+        data = await db.collection("customers").insertOne(req.body);
+        console.log(data);
+    }
+    console.log(data);
+    res.status(200).json({ msg: "Room booked successfully", data });
 };
 
 module.exports = { getAllRooms, bookRoom, createRoom };
